@@ -235,13 +235,12 @@ insert() {
 
             ## Formats like %rand<type>
             ## eg. %randname,%randcity
-
             column=${column#%rand}
 
             # checking if file exists
-            if [ ! -f "$PREFIX/$column" ]; then
-                echo "$PREFIX/$column not exists"
-                exit 1
+            local file="${PREFIX_ALT:-$PREFIX}/$column"
+            if [ ! -f "$file" ]; then
+                echo "Error: $file not exists"
             fi
 
             # generating random string for function name
@@ -249,20 +248,36 @@ insert() {
 
             # evaluating function dynamically and storing the function name in FUNCS array
             eval "function $randomString() {
-        local max=\`awk 'END { print NR }' "$PREFIX\/$column"\`
+        local max=\`awk 'END { print NR }' "$file"\`
         local result=\$((1 + RANDOM % \$((max--))))
-        sed \"\${result}q;d\" "$PREFIX\/$column" | tr -d '\\n'  | sed 's/^/\\x27/g' |  sed 's/\$/\\x27/g'
+        sed \"\${result}q;d\" "$file" | tr -d '\\n'  | sed 's/^/\\x27/g' |  sed 's/\$/\\x27/g'
     }"
-
             FUNCS+=("$randomString")
             ;;
 
         *)
             # if no special format specified, just puts the same text in all columns
             # eg. null
-            eval "function $randomString() {
-            echo -n "$column"
-            }"
+            # generating random string for function name
+            local randomString=$(randsomString)
+            local randomString1=$(randsomString)
+
+            # checking if file exists
+            local file="${PREFIX_ALT:-$PREFIX}/$column"
+            if [ ! -f "$file" ]; then
+                eval "function $randomString() {
+                echo -n "$column"
+                    }"
+            else
+
+                # evaluating function dynamically and storing the function name in FUNCS array
+                eval "function $randomString() {
+        local max=\`awk 'END { print NR }' "$file"\`
+        $randomString1=\${$randomString1:-1}
+        sed \"\${$randomString1}q;d\" "$file" | tr -d '\\n'  | sed 's/^/\\x27/g' |  sed 's/\$/\\x27/g'
+        (($randomString1++))
+    }"
+            fi
             FUNCS+=("$randomString")
             ;;
         esac
