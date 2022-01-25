@@ -64,12 +64,12 @@ help_text() {
         printf "NOTE: If you want use custom types, then make sure you passed -p option with path to your files\n"
         printf "\n"
         printf "Example:\n"
-        printf "%b$ ./gensql insert -t table1 -n 5 -v %%randname,%%rand%%num34-50,%%strCS20A1{10-24}{02d},%%randcity%b\n" "$B" "$N"
-        echo "      INSERT INTO table1 VALUES('Santino Clay',43,'CS20A110','Cali')
-      INSERT INTO table1 VALUES('Ezra Phelps',39,'CS20A111','New York')
-      INSERT INTO table1 VALUES('Brielle Miles',41,'CS20A112','Omsk')
-      INSERT INTO table1 VALUES('Jamiya Nicholson',42,'CS20A123','Patna')
-      INSERT INTO table1 VALUES('Ashlynn Ponce',39,'CS20A124','Guatemala City')"
+        printf "%b$ ./gensql insert -t table1 -n 5 -v %%randname,%%rand%%num34-50,%%strCS20A1{10-24}{02d},%%randcity,null%b\n" "$B" "$N"
+        echo "      INSERT INTO table1 VALUES('Walker Avery',47,'CS20A110','Munich',null)
+      INSERT INTO table1 VALUES('Dakota Mcgrath',43,'CS20A111','Rosario',null)
+      INSERT INTO table1 VALUES('Marley Wolf',35,'CS20A112','Jakarta',null)
+      INSERT INTO table1 VALUES('Janae Lam',35,'CS20A113','Xiamen',null)
+      INSERT INTO table1 VALUES('Macy Santana',44,'CS20A114','Ahmedabad',null)"
         printf "\nReport bugs at https://github.com/ms-jagadeeshan/gensql/issues\n"
         ;;
     *)
@@ -319,5 +319,3 @@ case "$1" in
     echo "Comming soon"
     ;;
 esac
-
-#
