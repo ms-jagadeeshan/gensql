@@ -1,36 +1,130 @@
 #!/bin/bash
-
 set -e
 trap 'echo Error at about $LINENO' ERR
 
-PREFIX="$HOME/college/4th_sem/dbms/lab/db"
+VERSION="0.5"
+PREFIX="$HOME/projects/gensql/db"
 LIST=("city" "company" "email" "name" "university" "word")
 
-function randsomString() {
+# color codes
+N="\033[0m"    # Reset
+B="\033[1m"    # Bold
+R="\033[1;31m" # Red
+G="\033[1;32m" # Green
+Y="\033[1;33m" # Yellow
+M="\033[1;35m" # Magenta
+C="\033[1;36m" # Cyan
+
+##################################
+#####      Help message      #####
+##################################
+
+help_text() {
+
+    case $1 in
+    "insert")
+        printf "Usage: gensql insert [options]\n"
+        printf "\n"
+        printf "Options:\n"
+        printf "  -h                    Shows this help message and exits\n"
+        printf "  -n [number]           number of values need to be generated\n"
+        printf "  -p [path]             custom directory for searching random values\n"
+        printf "  -t [table name]       table name to be created\n"
+        printf "  -v [string]           format string( variables are rand - random, str - string, num - number\n"
+        printf "\n"
+        printf "Formats for -v option:\n"
+        printf "  ∙ %%num<range>\n"
+        printf "  ∙ %%rand%%num<range>\n"
+        printf "  ∙ %%rand<type>\n"
+        printf "  ∙ %%str<string>{<range>}{<format>}<string>\n"
+        printf "  ∙ %%rand%%str<string>{<range>}{<format>}<string>\n"
+        printf "  ∙ <type>\n"
+        # printf "1) Chooses random value of given type, from db/<type> file\n"
+        # printf "  %%rand<type>            eg. %%randname, %%randcity, %%randemail\n"
+        # printf "\n"
+        # printf "2) Generates the string with random number in a given range\n"
+        # printf "  %%rand%%str<string>{<range>}{<format>}<string>       -  <format> is similar as printf statements\n"
+        # printf "     eg. %%rand%%strCS20A10{1-10}{02d} - this generates CS20A1004, CS20A1008, etc\n"
+        # printf "        %%rand%%strCS20A10{1-30}{03d}AB - this generates CS20A10005AB,CS20A10002AB, etc\n"
+        # printf "\n"
+        # printf "3)Generates random number in a given range\n"
+        # printf "  %%rand%%num<range>       eg.  %%rand%%num1-10, %%rand%%num100-115\n"
+        # printf "\n"
+        # printf "4) Generates number from min value to max value given,if 1-3, then 1,2,3 will be generated\n"
+        # printf "  %%num<range>       eg.  %%num1-10, %%num100-115\n"
+        # printf "\n"
+        # printf "5) Generates string from min value to max value given,if a{1-3}{02d}, then a01,a02,a03 will be generated\n"
+        # printf "  %%str<string>{<range>}{<format>}<string>       -  <format> is similar as printf statements\n"
+        # printf "    eg. %%strCS20A10{1-10}{02d} - this generates CS20A1001, CS20A1002,...etc\n"
+        # printf "        %%strCS20A10{2-30}{03d}AB - this generates CS20A10002AB,CS20A10003AB, ...etc\n"
+        # printf "\n"
+        # printf "6) Generates the value from first line to last line of file given\n"
+        # printf "For each insertion,takes value from the file line by line, you need to create file named <type>\n"
+        # printf "  <type>            eg. student_list, due_list\n"
+        printf "NOTE: If you want use custom types, then make sure you passed -p option with path to your files\n"
+        printf "\n"
+        printf "Example:\n"
+        printf "%b$ ./gensql insert -t table1 -n 5 -v %%randname,%%rand%%num34-50,%%strCS20A1{10-24}{02d},%%randcity%b\n" "$B" "$N"
+        echo "      INSERT INTO table1 VALUES('Santino Clay',43,'CS20A110','Cali')
+      INSERT INTO table1 VALUES('Ezra Phelps',39,'CS20A111','New York')
+      INSERT INTO table1 VALUES('Brielle Miles',41,'CS20A112','Omsk')
+      INSERT INTO table1 VALUES('Jamiya Nicholson',42,'CS20A123','Patna')
+      INSERT INTO table1 VALUES('Ashlynn Ponce',39,'CS20A124','Guatemala City')"
+        printf "\nReport bugs at https://github.com/ms-jagadeeshan/gensql/issues\n"
+        ;;
+    *)
+        printf "Usage: gensql subcommand [options]\n"
+        printf "\n"
+        printf "Subcommands:\n"
+        printf "  insert                Generates insertion code for mysql\n"
+        printf "  alter                 Comming soon\n"
+        printf "  create                Comming soon\n"
+        printf "  help                  display this help and exit\n"
+        printf "  version               output version information and exit\n"
+        printf "\nReport bugs at https://github.com/ms-jagadeeshan/gensql/issues\n"
+        ;;
+    esac
+    exit 0
+}
+
+randsomString() {
     tr -dc A-Za-z </dev/urandom | head -c 17
 }
 
-function help()
-{
-    help_msg='Usage: gensql <subcommand> [args]
+insert() {
 
-    '
-}
+    #############################
+    #####      Getopts      #####
+    #############################
 
+    # -v : string for formatting
+    # -h : help
+    # -n : number of entries to be created
+    # -t : table name
+    # -p : custom directory path
 
-function insert() {
-
-    while getopts t:v:p:n: options; do
+    while getopts t:v:p:n:h options; do
         case $options in
         t) table_name=$OPTARG ;;
         v) val_string=$OPTARG ;;
-        p) PREFIX=$OPTARG ;;
+        p)
+            PREFIX_ALT=$OPTARG
+            PREFIX_ALT=$(realpath ${PREFIX_ALT})
+            if [ ! -d "$PREFIX_ALT" ]; then
+                echo "Error: $PREFIX_ALT path not exists"
+                exit 1
+            fi
+
+            ;;
         n) no_of_vals=$OPTARG ;;
+        h) help_text "insert" ;;
+        *) help_text "insert" ;;
         esac
     done
-    table_name=${table_name:?"Table name is required"}
-    no_of_vals=${no_of_vals:-100}
-    val_string=${val_string:?"Format string required"}
+
+    table_name=${table_name:-"Table1"}
+    no_of_vals=${no_of_vals:-15}
+    val_string=${val_string:-"%randname,%rand%num34-50,%strCS20A1{10-24}{02d},%randcity"}
 
     FUNCS=()
 
@@ -38,11 +132,12 @@ function insert() {
 
     for column in $val_string; do
         case "${column}" in
-        "rand%str"*)
+        "%rand%str"*)
 
-            ## Format rand%str<string>{<range>}{<format>}<string>
+            ## Format %rand%str<string>{<range>}{<format>}<string>
             ## eg. rand%strCS20{1-10}{02d}00
-            column=${column#rand%str}
+
+            column=${column#%rand%str}
             local format_size=$(echo ${column} | cut -d "{" -f3 | cut -d "}" -f1)
             local numrange=$(echo ${column} | cut -d "{" -f2 | cut -d "}" -f1)
             local min=${numrange%\-*}
@@ -60,12 +155,12 @@ function insert() {
 
             FUNCS+=("$randomString")
             ;;
-        "rand%num"*)
+        "%rand%num"*)
 
-            ## Format rand%num<range>
+            ## Format %rand%num<range>
             ## eg. rand%num1-10
 
-            column=${column#rand%num}
+            column=${column#%rand%num}
             local min=${column%\-*}
             local max=${column##*\-}
             max=$((max - min))
@@ -136,12 +231,12 @@ function insert() {
                 }"
             FUNCS+=("$randomString")
             ;;
-        "rand"*)
+        "%rand"*)
 
-            ## Formats like rand<type>
-            ## eg. randname,randcity
+            ## Formats like %rand<type>
+            ## eg. %randname,%randcity
 
-            column=${column#rand}
+            column=${column#%rand}
 
             # checking if file exists
             if [ ! -f "$PREFIX/$column" ]; then
@@ -177,9 +272,10 @@ function insert() {
 
     for ((i = 0; i < no_of_vals; i++)); do
         printf "INSERT INTO $table_name VALUES("
-        for funcs in ${FUNCS[@]}; do
-            $funcs
+        ${FUNCS[0]}
+        for funcs in ${FUNCS[@]:1}; do
             printf ","
+            $funcs
         done
         printf ")\n"
     done
@@ -192,10 +288,20 @@ case "$1" in
     insert $@
     ;;
 "alter")
-    echo "item = 2 or item = 3"
+    echo "Comming soon"
+    ;;
+"create")
+    echo "Comming soon"
+    ;;
+"help" | "--help")
+    help_text
+    ;;
+"version" | "--version")
+    printf "gensql %s\n" "$VERSION"
+    exit 0
     ;;
 *)
-    echo "default (none of above)"
+    echo "Comming soon"
     ;;
 esac
 
