@@ -1,0 +1,202 @@
+#!/bin/bash
+
+set -e
+trap 'echo Error at about $LINENO' ERR
+
+PREFIX="$HOME/college/4th_sem/dbms/lab/db"
+LIST=("city" "company" "email" "name" "university" "word")
+
+function randsomString() {
+    tr -dc A-Za-z </dev/urandom | head -c 17
+}
+
+function help()
+{
+    help_msg='Usage: gensql <subcommand> [args]
+
+    '
+}
+
+
+function insert() {
+
+    while getopts t:v:p:n: options; do
+        case $options in
+        t) table_name=$OPTARG ;;
+        v) val_string=$OPTARG ;;
+        p) PREFIX=$OPTARG ;;
+        n) no_of_vals=$OPTARG ;;
+        esac
+    done
+    table_name=${table_name:?"Table name is required"}
+    no_of_vals=${no_of_vals:-100}
+    val_string=${val_string:?"Format string required"}
+
+    FUNCS=()
+
+    IFS=','
+
+    for column in $val_string; do
+        case "${column}" in
+        "rand%str"*)
+
+            ## Format rand%str<string>{<range>}{<format>}<string>
+            ## eg. rand%strCS20{1-10}{02d}00
+            column=${column#rand%str}
+            local format_size=$(echo ${column} | cut -d "{" -f3 | cut -d "}" -f1)
+            local numrange=$(echo ${column} | cut -d "{" -f2 | cut -d "}" -f1)
+            local min=${numrange%\-*}
+            local max=${numrange##*\-}
+            max=$((max - min))
+            unset numrange
+            local str1=$(echo ${column} | cut -d "{" -f1 | cut -d "}" -f1)
+            local str2=$(echo ${column} | cut -d "{" -f3 | cut -d "}" -f2)
+
+            local randomString=$(randsomString)
+            eval "function $randomString() {
+                result=\$(($min + RANDOM % $max))
+                printf \"'${str1}%${format_size}${str2}'\" \"\${result}\"
+                }"
+
+            FUNCS+=("$randomString")
+            ;;
+        "rand%num"*)
+
+            ## Format rand%num<range>
+            ## eg. rand%num1-10
+
+            column=${column#rand%num}
+            local min=${column%\-*}
+            local max=${column##*\-}
+            max=$((max - min))
+
+            # Random string for function name
+            local randomString=$(randsomString)
+
+            # function calculates random number and returns the value
+            eval "function $randomString() {
+                result=\$(($min + RANDOM % $max))
+                echo -n \"\${result}\"
+                }"
+
+            FUNCS+=("$randomString")
+            ;;
+        "%num"*)
+
+            # Format %num<range>
+            # eg. %num10-20
+            column=${column#%num}
+            local num1=${column%\-*}
+            local num2=${column##*\-}
+
+            # Random string for function name
+            local randomString=$(randsomString)
+
+            # Random string for variable name
+            local randomString1=$(randsomString)
+
+            # Function which returns value and increments after eachtime being called
+            eval "function $randomString() {
+
+                $randomString1=\${$randomString1:-$num1}
+                echo -n \$$randomString1
+                (($randomString1++))
+                }"
+
+            FUNCS+=("$randomString")
+
+            ;;
+        "%str"*)
+
+            # Format %str<string>{<range>}{<format>}<string>
+            # eg. %strCS20{1-10}{02d}00
+
+            column=${column#%str}
+            local format_size=$(echo ${column} | cut -d "{" -f3 | cut -d "}" -f1)
+            local numrange=$(echo ${column} | cut -d "{" -f2 | cut -d "}" -f1)
+
+            # num1 => lower bound, num2 => upper bound
+            local num1=${numrange%\-*}
+            local num2=${numrange##*\-}
+            unset numrange
+
+            # Strings before and after the numbers
+            local str1=$(echo ${column} | cut -d "{" -f1 | cut -d "}" -f1)
+            local str2=$(echo ${column} | cut -d "{" -f3 | cut -d "}" -f2)
+
+            # Random strings for name
+            local randomString=$(randsomString)
+            local randomString1=$(randsomString)
+
+            eval "function $randomString() {
+
+                $randomString1=\${$randomString1:-$num1}
+                printf \"'${str1}%${format_size}${str2}'\" \$$randomString1
+                (($randomString1++))
+                }"
+            FUNCS+=("$randomString")
+            ;;
+        "rand"*)
+
+            ## Formats like rand<type>
+            ## eg. randname,randcity
+
+            column=${column#rand}
+
+            # checking if file exists
+            if [ ! -f "$PREFIX/$column" ]; then
+                echo "$PREFIX/$column not exists"
+                exit 1
+            fi
+
+            # generating random string for function name
+            local randomString=$(randsomString)
+
+            # evaluating function dynamically and storing the function name in FUNCS array
+            eval "function $randomString() {
+        local max=\`awk 'END { print NR }' "$PREFIX\/$column"\`
+        local result=\$((1 + RANDOM % \$((max--))))
+        sed \"\${result}q;d\" "$PREFIX\/$column" | tr -d '\\n'  | sed 's/^/\\x27/g' |  sed 's/\$/\\x27/g'
+    }"
+
+            FUNCS+=("$randomString")
+            ;;
+
+        *)
+            # if no special format specified, just puts the same text in all columns
+            # eg. null
+            eval "function $randomString() {
+            echo -n "$column"
+            }"
+            FUNCS+=("$randomString")
+            ;;
+        esac
+
+    done
+    unset IFS
+
+    for ((i = 0; i < no_of_vals; i++)); do
+        printf "INSERT INTO $table_name VALUES("
+        for funcs in ${FUNCS[@]}; do
+            $funcs
+            printf ","
+        done
+        printf ")\n"
+    done
+
+}
+
+case "$1" in
+"insert")
+    shift 1
+    insert $@
+    ;;
+"alter")
+    echo "item = 2 or item = 3"
+    ;;
+*)
+    echo "default (none of above)"
+    ;;
+esac
+
+#
