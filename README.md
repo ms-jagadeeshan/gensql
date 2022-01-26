@@ -3,31 +3,17 @@ Small bash script to generate mysql insert values randomly
 
 ## Installation
 ### Prerequisite
-`make` command is needed for installation.
 ```sh
 sudo apt-get install make
 ```
 
 ### Install
-First clone the repository, to you machine
 ```sh
-https://github.com/ms-jagadeeshan/gensql.git
-cd gensql
+git clone https://github.com/ms-jagadeeshan/gensql.git && cd gensql
 sudo make install
 ```
-### Update
-```sh
-cd gensql
-git pull
-sudo make reinstall
-```
-
-### Uninstall
-```sh
-cd gensql
-sudo make uninstall
-```
-
+> To update, just `git pull` on your local gensql repository and reinstall with `sudo make reinstall`.  
+> To uninstall, simply run `sudo make uninstall`.
 
 ## Usage
 ```
