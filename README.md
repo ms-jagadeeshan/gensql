@@ -2,6 +2,11 @@
 Small bash script to generate mysql insert values randomly
 
 ## Installation
+### Prerequisite
+`make` command is needed for installation.
+```sh
+sudo apt-get install make
+```
 
 ### Install
 First clone the repository, to you machine
