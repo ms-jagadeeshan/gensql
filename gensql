@@ -313,7 +313,7 @@ case "$1" in
 "help" | "--help")
     help_text
     ;;
-"version" | "--version"| "-v")
+"version" | "--version" | "-v")
     printf "gensql %s\n" "$VERSION"
     exit 0
     ;;
