@@ -40,16 +40,16 @@ Options:
   -v [string]           format string( variables are rand - random, str - string, num - number
 
 Formats for -v option:
-  ∙ %num<range>
-  ∙ %rand%num<range>
-  ∙ %rand<type>
-  ∙ %str<string>{<range>}{<format>}<string>
-  ∙ %rand%str<string>{<range>}{<format>}<string>
-  ∙ <type>
+  ∙ %num<range>       eg. %num34-78
+  ∙ %rand%num<range>  eg. %rand%num54-76
+  ∙ %rand<type>       eg. %randname, %randcity
+  ∙ %str<string>{<range>}{<format>}<string>       eg. %strCS20A1{1-13}{02d}C
+  ∙ %rand%str<string>{<range>}{<format>}<string>  eg. %rand%strCS20A1{1-13}{02d}C
+  ∙ <type>            eg. name,city,email
 NOTE: If you want use custom types, then make sure you passed -p option with path to your files
 
 Example:
-$ ./gensql insert -t table1 -n 5 -v %randname,%rand%num34-50,%strCS20A1{10-24}{02d},%randcity,null
+$ gensql insert -t table1 -n 5 -v %randname,%rand%num34-50,%strCS20A1{10-24}{02d},%randcity,null
       INSERT INTO table1 VALUES('Walker Avery',47,'CS20A110','Munich',null)
       INSERT INTO table1 VALUES('Dakota Mcgrath',43,'CS20A111','Rosario',null)
       INSERT INTO table1 VALUES('Marley Wolf',35,'CS20A112','Jakarta',null)
