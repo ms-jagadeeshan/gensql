@@ -3,7 +3,7 @@ set -e
 trap 'echo Error at about $LINENO' ERR
 
 VERSION="0.5"
-PREFIX="$HOME/projects/gensql/db"
+PREFIX="/usr/local/share/gensql/db"
 LIST=("city" "company" "email" "name" "university" "word")
 
 # color codes
@@ -81,7 +81,9 @@ help_text() {
         printf "  create                Comming soon\n"
         printf "  help                  display this help and exit\n"
         printf "  version               output version information and exit\n"
-        printf "\nReport bugs at https://github.com/ms-jagadeeshan/gensql/issues\n"
+        printf "\n"
+        printf "Use 'gensql [subcommand] -h' for more details\n"
+        printf "Report bugs at https://github.com/ms-jagadeeshan/gensql/issues\n"
         ;;
     esac
     exit 0
@@ -311,11 +313,12 @@ case "$1" in
 "help" | "--help")
     help_text
     ;;
-"version" | "--version")
+"version" | "--version"| "-v")
     printf "gensql %s\n" "$VERSION"
     exit 0
     ;;
 *)
-    echo "Comming soon"
+    printf "Error: subcommand not found\n"
+    help_text
     ;;
 esac

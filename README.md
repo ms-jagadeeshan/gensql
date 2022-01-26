@@ -1,6 +1,29 @@
 # What is gensql?
 Small bash script to generate mysql insert values randomly
 
+## Installation
+
+### Install
+First clone the repository, to you machine
+```sh
+https://github.com/ms-jagadeeshan/gensql.git
+cd gensql
+sudo make install
+```
+### Update
+```sh
+cd gensql
+git pull
+sudo make reinstall
+```
+
+### Uninstall
+```sh
+cd gensql
+sudo make uninstall
+```
+
+
 ## Usage
 ```
 Usage: gensql subcommand [options]
