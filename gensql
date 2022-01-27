@@ -294,7 +294,7 @@ insert() {
             printf ","
             $funcs
         done
-        printf ")\n"
+        printf ");\n"
     done
 
 }
