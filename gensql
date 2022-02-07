@@ -242,7 +242,11 @@ insert() {
             # checking if file exists
             local file="${PREFIX_ALT:-$PREFIX}/$column"
             if [ ! -f "$file" ]; then
-                echo "Error: $file not exists"
+                file="${PREFIX}/$column"
+                if [ ! -f "$file" ]; then
+                    echo "Error: $file not exists"
+                    exit 1
+                fi
             fi
 
             # generating random string for function name
@@ -266,6 +270,10 @@ insert() {
 
             # checking if file exists
             local file="${PREFIX_ALT:-$PREFIX}/$column"
+            if [ ! -f "$file" ]; then
+                file="${PREFIX}/$column"
+            fi
+
             if [ ! -f "$file" ]; then
                 eval "function $randomString() {
                 echo -n "$column"
